@@ -1,4 +1,5 @@
-# iconator
-Icons sheet maker
+# Iconator 
+<img style="height: 30px;" src="https://github.com/zedux-dev/iconator/blob/main/build/icon.png?raw=true"> 
 
-<img src="https://raw.githubusercontent.com/zedux-dev/iconator/2ee3eaa879c97acc39dec5de9bdc879d773ed0c6/build/icon.png" style="height: 30px;">
+Icons sheet maker with drag and drop functionality, it compose automatically a sheet from the given icons occupying the first available cell.
+Easy to use and fast to manage, only cons is that it does not take in consideration space waste in terms of pixels for sake of simplicity.
