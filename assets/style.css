@@ -38,6 +38,8 @@ body {
 
 .icon {
     cursor: pointer;
+    mask-repeat: no-repeat;
+    background-repeat: no-repeat;
 }
 
 .icon:hover {
@@ -81,6 +83,12 @@ body {
 .color-picker > .title > .buttons {
     display: flex;
     align-items: center;
+}
+
+.color-picker > .title > .buttons > span {
+    margin-left: 8px;
+    width: 30px;
+    text-align: right;
 }
 
 .color-picker > .title button {

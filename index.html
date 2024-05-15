@@ -11,6 +11,7 @@
 
         <div class="buttons">
             <button class="nav-btn set-palette" onclick="setPaletteHandler();">Edit palette</button>
+            <button class="nav-btn" onclick="newProject();">New project <small>(&#8984; + N)</small></button>
             <button class="nav-btn open-btn" onclick="document.querySelector('.project-uploader').click();">Open project <small>(&#8984; + O)</small></button>
             <button class="nav-btn save-btn" onclick="save();" disabled>Save <small>(&#8984; + S)</small></button>
             <button class="nav-btn export-btn" onclick="exportProject();" disabled>Export <small>(&#8984; + E)</small></button>
@@ -44,6 +45,14 @@
         </div>
     
         <div class="color-picker">
+            <div class="title">
+                <span>Scale</span>
+                <div class="buttons">
+                    <input id="scale-editor" type="range" min="20" max="100" value="50" class="slider" oninput="scaleIcon(event);">
+                    <span id="scale-factor">100%</span>
+                </div>
+            </div>
+
             <div class="title">
                 <span>Color picker</span>
                 <div class="buttons">

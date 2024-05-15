@@ -35,7 +35,7 @@ new Sortable(grid, {
     ghostClass: 'ghost'
 });
 
-function editIcon(e) {
+function editIcon(e) {    
     if(e.target.id == iconsToEdit) {
         iconsToEdit = [];
         colorPicker.classList.remove('show');
@@ -53,6 +53,15 @@ function editIcon(e) {
         e.target.classList.add('in-edit');
         colorPicker.classList.add('show');
     }
+
+    if(iconsToEdit != null) {
+        if(iconsToEdit.length == 1) {
+            let perc = document.getElementById(iconsToEdit[0]).dataset.scale * 100;
+            document.querySelector('#scale-factor').innerText = perc + '%';
+            document.querySelector('#scale-editor').value = perc;
+        }
+    }
+    if(iconsToEdit.length > 1) document.querySelector('#scale-factor').innerText = 'multiple';
 }
 
 function generateMosaic() {
@@ -87,12 +96,17 @@ dropArea.addEventListener('drop', (e) => {
     });
 });
 
-function insertIcon(base64, color = '#ffffff') {
+function insertIcon(base64, color = '', img = null, scale = 1) {
     document.querySelector('.save-btn').disabled = false;
     document.querySelector('.export-btn').disabled = false;
 
     let image = document.createElement('img');
     let div = document.createElement('div');
+
+    let imgurl = base64;
+    if(img) {
+        imgurl = img;
+    }
 
     image.onload = () => {
         let width = image.naturalWidth;
@@ -111,15 +125,32 @@ function insertIcon(base64, color = '#ffffff') {
             width = (MAX_HEIGHT * image.naturalWidth) / image.naturalHeight;
         }
 
-        const css = 'background-color: ' + color + '; mask-size: ' + width + 'px ' + height + 'px; mask-image: url("' + base64 + '"); width: ' + width + 'px; height: ' + height + 'px;';
-        div.setAttribute('style', css);
+        div.style.height = height;
+        div.style.width = width;
+
+        if(color != '') {
+            div.style.maskImage = 'url(' + imgurl + ')';
+            div.style.backgroundColor = color;
+            div.style.maskSize = width + 'px ' + height + 'px';
+            div.style.maskPosition = '0 0';
+        } else {
+
+
+            div.style.backgroundImage = 'url(' + imgurl + ')';
+            div.style.backgroundSize = width + 'px ' + height + 'px';
+            div.style.backgroundPosition = '0 0';
+        }
+
         div.setAttribute('onclick', 'editIcon(event);');
         div.setAttribute('oncontextmenu', 'deleteIcon(event);');
+        div.setAttribute('data-scale', scale);
 
         grid.insertAdjacentElement('beforeend', div);
+
+        applyScale(div.id, scale);
     };
 
-    image.src = base64;
+    image.src = imgurl;
 }
 
 function convertBase64(file) {
@@ -145,10 +176,67 @@ function applyColor(e) {
 
     if(iconsToEdit.length > 0) {
         iconsToEdit.forEach(id => {
+            let image;
             let icon = document.getElementById(id);
-            if(icon) icon.style.backgroundColor = e.target.style.backgroundColor;
+
+            if(icon) {
+                let scale = icon.getAttribute('data-scale');
+                let width = icon.style.width.replace('px', '');
+                let height = icon.style.height.replace('px', '');
+                let scaledWidth = width;
+                let scaledHeight = height;
+
+                if(icon.style.maskImage) {
+                    image = icon.style.maskImage;
+                } else {
+                    image = icon.style.backgroundImage;
+                }
+                
+                if(scale) {
+                    icon.style.maskPosition = '50% 50%';
+                    icon.style.maskSize = (width * scale) + 'px ' + (height * scale) + 'px';
+                } else {
+                    icon.style.maskPosition = '0 0';
+                    icon.style.maskSize = width + 'px ' + height + 'px';
+                }
+
+                icon.style.maskImage = image;
+                icon.style.backgroundImage = null;
+                icon.style.backgroundPosition = null;
+                icon.style.backgroundSize = null;
+                icon.style.backgroundColor = e.target.style.backgroundColor;
+            }
         });
     }
+}
+
+function applyScale(id, scaleFactor) {
+    let icon = document.getElementById(id);
+
+    if(icon) {
+        icon.setAttribute('data-scale', scaleFactor);
+        let width = icon.style.width.replace('px', '');
+        let height = icon.style.height.replace('px', '');
+        let newWidth = width * scaleFactor;
+        let newHeight = height * scaleFactor;
+    
+        if(icon.style.backgroundImage) {
+            icon.style.backgroundSize = newWidth + 'px ' + newHeight + 'px';
+            icon.style.backgroundPosition = '50% 50%';
+        } else {
+            icon.style.maskSize = newWidth + 'px ' + newHeight + 'px';
+            icon.style.maskPosition = '50% 50%';
+        }
+    }
+}
+
+function scaleIcon(e) {
+    let scaleFactor = e.target.value / 100;
+    document.querySelector('#scale-factor').innerText = e.target.value + '%';
+
+    iconsToEdit.forEach(id => {
+        applyScale(id, scaleFactor);
+    });
 }
 
 function refreshPalette() {
@@ -208,13 +296,13 @@ refreshPalette();
 function getAppDataPath() {
     switch (process.platform) {
         case "darwin": {
-            return path.join(process.env.HOME, "Library", "Application Support", "Your app name");
+            return path.join(process.env.HOME, "Library", "Application Support", "iconator");
         }
         case "win32": {
-            return path.join(process.env.APPDATA, "Your app name");
+            return path.join(process.env.APPDATA, "iconator");
         }
         case "linux": {
-            return path.join(process.env.HOME, ".Your app name");
+            return path.join(process.env.HOME, ".iconator");
         }
         default: {
             console.log("Unsupported platform!");
@@ -248,7 +336,7 @@ async function openProject(file) {
     let icons = JSON.parse(projectJson);
 
     icons.forEach(icon => {
-        insertIcon(icon.base64, icon.color);
+        insertIcon(icon.base64, icon.color, icon.image);
     });
 }
 
@@ -256,8 +344,10 @@ function prepareIconsJSON() {
     let icons = [];
     document.querySelectorAll('.icon').forEach(icon => {
         icons.push({
+            image: icon.style.backgroundImage.replace('url("', '').replace('")', ''),
             base64: icon.style.maskImage.replace('url("', '').replace('")', ''),
-            color: icon.style.backgroundColor
+            color: icon.style.backgroundColor,
+            scale: icon.dataset.scale
         });
     });
     return JSON.stringify(icons);
@@ -309,7 +399,7 @@ function tryRecover() {
         let tmp = fs.readFileSync(path.join(appDatatDirPath, './tmp.json'));
         let icons = JSON.parse(tmp);
         icons.forEach(icon => {
-            insertIcon(icon.base64, icon.color);
+            insertIcon(icon.base64, icon.color, icon.image, icon.scale);
         });
         document.querySelector('.save-btn').disabled = false;
         document.querySelector('.export-btn').disabled = false;
@@ -330,6 +420,7 @@ function KeyPress(e) {
     if(e.keyCode == 83 && e.metaKey) save();
     if(e.keyCode == 69 && e.metaKey) exportProject();
     if(e.keyCode == 79 && e.metaKey) document.querySelector('.project-uploader').click();;
+    if(e.keyCode == 78 && e.metaKey) document.querySelector('.project-uploader').click();;
 }
 
 document.addEventListener("keydown", KeyPress);
@@ -399,4 +490,17 @@ function savePalette() {
     fs.writeFileSync(path.join(appDatatDirPath, './palette.json'), JSON.stringify(palette));
     document.querySelector('.palette-editor-wrapper').classList.remove('open');
     refreshPalette();
+}
+
+function newProject() {
+    let c = confirm('Are you sure you want to create a new project? All unsaved changes will be lost.');
+    if(c) {
+        try {
+            fs.unlinkSync(path.join(appDatatDirPath, './tmp.json'));
+            iconsToEdit = [];
+            grid.innerHTML = '';
+            document.querySelector('.save-btn').disabled = true;
+            document.querySelector('.export-btn').disabled = true;
+        } catch(err) {}
+    }
 }
