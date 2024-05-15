@@ -4,11 +4,10 @@ const path = require('path');
 
 const createWindow = () => {
     const mainWindow = new BrowserWindow({
-        width: 600,
-        height: 700,
-        minWidth: 600,
-        minHeight: 700,
-        // maxWidth: 600,
+        width: 925,
+        height: 560,
+        minWidth: 925,
+        minHeight: 560,
         webPreferences: {
             preload: path.join(__dirname, 'preload.js'),
             nodeIntegration: true,
@@ -17,7 +16,6 @@ const createWindow = () => {
     });
 
     mainWindow.loadFile('./index.html');
-    
 }
 
 app.whenReady().then(() => {

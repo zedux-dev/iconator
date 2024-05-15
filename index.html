@@ -2,65 +2,61 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Iconator</title>
-
-    <link rel="stylesheet" type="text/css" href="./assets/style.css">
+    <title>Iconator 1.2</title>
+    <link rel="stylesheet" href="./assets/style.css?ssss">
 </head>
 <body>
     <div class="navbar">
         Iconator
 
         <div class="buttons">
-            <button class="nav-btn open-btn">Open project</button>
-            <button class="nav-btn save-btn" disabled>Save project</button>
+            <button class="nav-btn set-palette" onclick="setPaletteHandler();">Edit palette</button>
+            <button class="nav-btn open-btn" onclick="document.querySelector('.project-uploader').click();">Open project <small>(&#8984; + O)</small></button>
+            <button class="nav-btn save-btn" onclick="save();" disabled>Save <small>(&#8984; + S)</small></button>
+            <button class="nav-btn export-btn" onclick="exportProject();" disabled>Export <small>(&#8984; + E)</small></button>
 
-            <input type="file" class="project-uploader" accept="application/zip">
+            <input type="file" class="project-uploader" accept="application/zip" onchange="handleOpenProject(event);">
         </div>
     </div>
 
-    <div class="workspace">
-        <div class="canvas"></div>
-        
-        <div class="dropper">
+    <div class="palette-editor-wrapper">
+        <div class="palette-editor">
+            <div class="commands">
+                <button onclick="addPaletteGroup();">Add group</button>
+                <button class="close-editor" onclick="savePalette();">Save</button>
+            </div>
+
+            <span id="no-groups" style="width: 100%; padding-bottom: 10px; font-size: 12px; text-align: center;">No groups</span>
+
+            <div class="list"></div>
+        </div>
+    </div>
+    
+    <div class="app">
+        <div class="grid-wrapper">
+            <div class="grid">
+            </div>
+        </div>
+
+        <div class="drop-area">
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 384 512"><path d="M320 480H64c-17.7 0-32-14.3-32-32V64c0-17.7 14.3-32 32-32H192V144c0 26.5 21.5 48 48 48H352V448c0 17.7-14.3 32-32 32zM240 160c-8.8 0-16-7.2-16-16V32.5c2.8 .7 5.4 2.1 7.4 4.2L347.3 152.6c2.1 2.1 3.5 4.6 4.2 7.4H240zM64 0C28.7 0 0 28.7 0 64V448c0 35.3 28.7 64 64 64H320c35.3 0 64-28.7 64-64V163.9c0-12.7-5.1-24.9-14.1-33.9L254.1 14.1c-9-9-21.2-14.1-33.9-14.1H64zM208 278.6l52.7 52.7c6.2 6.2 16.4 6.2 22.6 0s6.2-16.4 0-22.6l-80-80c-6.2-6.2-16.4-6.2-22.6 0l-80 80c-6.2 6.2-6.2 16.4 0 22.6s16.4 6.2 22.6 0L176 278.6V400c0 8.8 7.2 16 16 16s16-7.2 16-16V278.6z"/></svg>
             <span>Drop icons here</span>
         </div>
-
-        <div class="picker">
-            <span>Change color</span>
-
-            <div class="row">
-                <div class="col">
-                    <div class="icons">
-                        <div class="color" data-rgb="204,61,61" style="background-color: rgb(204, 61, 61);"></div>
-                        <div class="color" data-rgb="70,179,54" style="background-color: rgb(70,179,54);"></div>
-                        <div class="color" data-rgb="255,255,255" style="background-color: rgb(255,255,255);"></div>
-                        <div class="color" data-rgb="0,0,0" style="background-color: rgb(0,0,0);"></div>
-                        <div class="color" data-rgb="196,198,199" style="background-color: rgb(196,198,199);"></div>
-                    </div>
-                    <span>Alea</span>
-                </div>
-
-                <div class="col">
-                    <div class="icons">
-                        <div class="color" data-rgb="170,57,57" style="background-color: rgb(170, 57, 57);"></div>
-                        <div class="color" data-rgb="154,169,60" style="background-color: rgb(154,169,60);"></div>
-                        <div class="color" data-rgb="238,238,238" style="background-color: rgb(238,238,238);"></div>
-                        <div class="color" data-rgb="0,0,0" style="background-color: rgb(0,0,0);"></div>
-                        <div class="color" data-rgb="170,170,170" style="background-color: rgb(170,170,170);"></div>
-                    </div>
-                    <span>Leonardo</span>
+    
+        <div class="color-picker">
+            <div class="title">
+                <span>Color picker</span>
+                <div class="buttons">
+                    <button class="refresh-btn" onclick="refreshPalette();"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><path d="M105.1 202.6c7.7-21.8 20.2-42.3 37.8-59.8c62.5-62.5 163.8-62.5 226.3 0L386.3 160H352c-17.7 0-32 14.3-32 32s14.3 32 32 32H463.5c0 0 0 0 0 0h.4c17.7 0 32-14.3 32-32V80c0-17.7-14.3-32-32-32s-32 14.3-32 32v35.2L414.4 97.6c-87.5-87.5-229.3-87.5-316.8 0C73.2 122 55.6 150.7 44.8 181.4c-5.9 16.7 2.9 34.9 19.5 40.8s34.9-2.9 40.8-19.5zM39 289.3c-5 1.5-9.8 4.2-13.7 8.2c-4 4-6.7 8.8-8.1 14c-.3 1.2-.6 2.5-.8 3.8c-.3 1.7-.4 3.4-.4 5.1V432c0 17.7 14.3 32 32 32s32-14.3 32-32V396.9l17.6 17.5 0 0c87.5 87.4 229.3 87.4 316.7 0c24.4-24.4 42.1-53.1 52.9-83.7c5.9-16.7-2.9-34.9-19.5-40.8s-34.9 2.9-40.8 19.5c-7.7 21.8-20.2 42.3-37.8 59.8c-62.5 62.5-163.8 62.5-226.3 0l-.1-.1L125.6 352H160c17.7 0 32-14.3 32-32s-14.3-32-32-32H48.4c-1.6 0-3.2 .1-4.8 .3s-3.1 .5-4.6 1z"/></svg></button>
+                    <button onclick="closeColorPicker();"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><path d="M393.4 41.4c12.5-12.5 32.8-12.5 45.3 0s12.5 32.8 0 45.3L269.3 256 438.6 425.4c12.5 12.5 12.5 32.8 0 45.3s-32.8 12.5-45.3 0L224 301.3 54.6 470.6c-12.5 12.5-32.8 12.5-45.3 0s-12.5-32.8 0-45.3L178.7 256 9.4 86.6C-3.1 74.1-3.1 53.9 9.4 41.4s32.8-12.5 45.3 0L224 210.7 393.4 41.4z"/></svg></button>
                 </div>
             </div>
-            
-            <button class="delete-icon">Delete icon</button>
 
-            <button class="close-picker">
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><path d="M420.7 36.7c6.2-6.2 16.4-6.2 22.6 0s6.2 16.4 0 22.6L246.6 256 443.3 452.7c6.2 6.2 6.2 16.4 0 22.6s-16.4 6.2-22.6 0L224 278.6 27.3 475.3c-6.2 6.2-16.4 6.2-22.6 0s-6.2-16.4 0-22.6L201.4 256 4.7 59.3c-6.2-6.2-6.2-16.4 0-22.6s16.4-6.2 22.6 0L224 233.4 420.7 36.7z"/></svg>
-            </button>
+            <div class="colors"></div>
         </div>
     </div>
 
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/1.4.1/jspdf.debug.js"></script>
     <script src="./app.js"></script>
 </body>
 </html>
